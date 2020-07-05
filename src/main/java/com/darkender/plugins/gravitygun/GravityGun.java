@@ -1,7 +1,9 @@
 package com.darkender.plugins.gravitygun;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -89,6 +91,33 @@ public class GravityGun extends JavaPlugin implements Listener
         return rayTraceResult;
     }
     
+    private void pickupBlock(Player player, Block block)
+    {
+        ArmorStand stand = player.getWorld().spawn(block.getLocation().add(0.5, 0, 0.5),
+                ArmorStand.class, armorStand ->
+                {
+                    armorStand.setHelmet(new ItemStack(block.getType()));
+                    armorStand.setGravity(false);
+                    armorStand.setVisible(false);
+                    armorStand.setInvulnerable(true);
+                    armorStand.setSilent(true);
+                });
+        heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand));
+        block.setType(Material.AIR);
+        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+    }
+    
+    private void dropBlock(Player player)
+    {
+        ArmorStand stand = (ArmorStand) heldEntities.get(player.getUniqueId()).getHeld();
+        FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
+                stand.getHelmet().getType().createBlockData());
+        fallingBlock.setVelocity(player.getVelocity());
+        stand.remove();
+        heldEntities.remove(player.getUniqueId());
+        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+    }
+    
     @EventHandler
     public void onPlayerInteractArEntity(PlayerInteractAtEntityEvent event)
     {
@@ -108,8 +137,7 @@ public class GravityGun extends JavaPlugin implements Listener
     
             if(heldEntities.containsKey(p.getUniqueId()))
             {
-                heldEntities.remove(p.getUniqueId());
-                p.playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+                dropBlock(p);
             }
         }
     }
@@ -135,8 +163,7 @@ public class GravityGun extends JavaPlugin implements Listener
                 
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
-                    heldEntities.remove(p.getUniqueId());
-                    p.playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+                    dropBlock(p);
                 }
                 else
                 {
@@ -145,20 +172,7 @@ public class GravityGun extends JavaPlugin implements Listener
                     {
                         if(ray.getHitBlock() != null)
                         {
-                            ArmorStand stand = p.getWorld().spawn(ray.getHitBlock().getLocation().add(0.5, 0, 0.5),
-                                    ArmorStand.class, armorStand ->
-                            {
-                                armorStand.setHelmet(new ItemStack(ray.getHitBlock().getType()));
-                                armorStand.setGravity(false);
-                                armorStand.setVisible(false);
-                                armorStand.setInvulnerable(true);
-                                armorStand.setSilent(true);
-                            });
-                            
-                            heldEntities.put(p.getUniqueId(), new HeldEntity(p, stand));
-                            ray.getHitBlock().setType(Material.AIR);
-            
-                            p.playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+                            pickupBlock(p, ray.getHitBlock());
                         }
                     }
                 }
