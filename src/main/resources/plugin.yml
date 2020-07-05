@@ -1,0 +1,10 @@
+name: GravityGun
+version: ${project.version}
+api-version: 1.14
+main: com.darkender.plugins.gravitygun.GravityGun
+author: Techdoodle
+commands:
+  gravitygun:
+    aliases:
+      - gg
+    permission: gravitygun.cmd
