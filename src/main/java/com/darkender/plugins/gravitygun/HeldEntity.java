@@ -54,6 +54,15 @@ public class HeldEntity
         {
             teleportSpot = holder.getEyeLocation().add(holder.getEyeLocation().getDirection().multiply(5.0));
         }
+    
+        ParticleUtils.displayCurve(ParticleUtils.getHandScreenLocation(holder.getEyeLocation(), false),
+                teleportSpot,
+                holder.getEyeLocation().add(velocity));
+        if(teleportSpot.getWorld().equals(from.getWorld()))
+        {
+            velocity = teleportSpot.toVector().subtract(from.toVector());
+        }
+        from = teleportSpot.clone();
         
         if(blockEntity)
         {
@@ -63,12 +72,6 @@ public class HeldEntity
         {
             held.setFallDistance(0.0F);
         }
-        
-        if(teleportSpot.getWorld().equals(from.getWorld()))
-        {
-            velocity = teleportSpot.toVector().subtract(from.toVector());
-        }
-        from = teleportSpot;
         
         held.teleport(teleportSpot);
         return true;
