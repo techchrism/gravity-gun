@@ -23,10 +23,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class GravityGun extends JavaPlugin implements Listener
 {
@@ -95,6 +92,14 @@ public class GravityGun extends JavaPlugin implements Listener
         meta.setDisplayName(ChatColor.GOLD + "Gravity Gun");
         meta.addEnchant(Enchantment.DURABILITY, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        meta.setLore(Arrays.asList(
+                ChatColor.DARK_AQUA + "Right Click",
+                ChatColor.BLUE + " \u2022 Pick up / drop block or mob",
+                "",
+                ChatColor.DARK_AQUA + "Left Click",
+                ChatColor.BLUE + " \u2022 Repel surrounding mobs",
+                ChatColor.BLUE + " \u2022 Repel held block or mob"));
+        
         meta.getPersistentDataContainer().set(gravityGunKey, PersistentDataType.BYTE, (byte) 1);
         gravityGun.setItemMeta(meta);
         return gravityGun;
