@@ -64,6 +64,15 @@ public class GravityGun extends JavaPlugin implements Listener
         }, 1L, 1L);
     }
     
+    @Override
+    public void onDisable()
+    {
+        for(UUID key : heldEntities.keySet())
+        {
+            drop(Bukkit.getPlayer(key));
+        }
+    }
+    
     public static ItemStack getGravityGun()
     {
         ItemStack gravityGun = new ItemStack(Material.GOLDEN_HORSE_ARMOR, 1);
