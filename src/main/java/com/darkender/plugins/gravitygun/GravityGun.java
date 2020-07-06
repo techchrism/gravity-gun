@@ -13,6 +13,8 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -29,6 +31,7 @@ import java.util.UUID;
 public class GravityGun extends JavaPlugin implements Listener
 {
     public static NamespacedKey gravityGunKey;
+    public static NamespacedKey heldBlockKey;
     private HashMap<UUID, HeldEntity> heldEntities;
     private HashSet<UUID> justClicked;
     
@@ -36,6 +39,7 @@ public class GravityGun extends JavaPlugin implements Listener
     public void onEnable()
     {
         gravityGunKey = new NamespacedKey(this, "gravity-gun");
+        heldBlockKey = new NamespacedKey(this, "held-block");
         heldEntities = new HashMap<>();
         justClicked = new HashSet<>();
         
@@ -62,6 +66,14 @@ public class GravityGun extends JavaPlugin implements Listener
                 });
             }
         }, 1L, 1L);
+        
+        for(World world : getServer().getWorlds())
+        {
+            for(Chunk chunk : world.getLoadedChunks())
+            {
+                cleanChunk(chunk);
+            }
+        }
     }
     
     @Override
@@ -124,6 +136,7 @@ public class GravityGun extends JavaPlugin implements Listener
                     armorStand.setVisible(false);
                     armorStand.setInvulnerable(true);
                     armorStand.setSilent(true);
+                    armorStand.getPersistentDataContainer().set(heldBlockKey, PersistentDataType.BYTE, (byte) 1);
                 });
         heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand, true));
         block.setType(Material.AIR);
@@ -160,6 +173,17 @@ public class GravityGun extends JavaPlugin implements Listener
         heldEntities.remove(player.getUniqueId());
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
         return newEntity;
+    }
+    
+    private void cleanChunk(Chunk chunk)
+    {
+        for(Entity e : chunk.getEntities())
+        {
+            if(e.getType() == EntityType.ARMOR_STAND && e.getPersistentDataContainer().has(heldBlockKey, PersistentDataType.BYTE))
+            {
+                e.remove();
+            }
+        }
     }
     
     @EventHandler
@@ -292,5 +316,17 @@ public class GravityGun extends JavaPlugin implements Listener
         {
             event.setCancelled(true);
         }
+    }
+    
+    @EventHandler(ignoreCancelled = true)
+    private void onChunkLoad(ChunkLoadEvent event)
+    {
+        cleanChunk(event.getChunk());
+    }
+    
+    @EventHandler(ignoreCancelled = true)
+    private void onChunkUnload(ChunkUnloadEvent event)
+    {
+        cleanChunk(event.getChunk());
     }
 }
