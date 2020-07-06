@@ -2,6 +2,7 @@ package com.darkender.plugins.gravitygun;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.TileState;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -119,8 +120,10 @@ public class GravityGun extends JavaPlugin implements Listener
     private RayTraceResult raytraceFor(Player player)
     {
         Location rayStart = player.getEyeLocation();
-        RayTraceResult rayTraceResult = rayStart.getWorld().rayTrace(rayStart, player.getEyeLocation().getDirection(),
-                20.0, FluidCollisionMode.NEVER, true, 0.0, entity ->
+        if(GravityGunConfig.areEntitiesAllowed())
+        {
+            return rayStart.getWorld().rayTrace(rayStart, player.getEyeLocation().getDirection(),
+                GravityGunConfig.getPickupRange(), FluidCollisionMode.NEVER, true, 0.0, entity ->
                 {
                     // Ensure the raytrace doesn't collide with the player
                     if(entity instanceof Player)
@@ -133,7 +136,12 @@ public class GravityGun extends JavaPlugin implements Listener
                         return (entity instanceof LivingEntity);
                     }
                 });
-        return rayTraceResult;
+        }
+        else
+        {
+            return rayStart.getWorld().rayTraceBlocks(rayStart, player.getEyeLocation().getDirection(),
+                    GravityGunConfig.getPickupRange(), FluidCollisionMode.NEVER, true);
+        }
     }
     
     private void pickupBlock(Player player, Block block)
@@ -225,7 +233,8 @@ public class GravityGun extends JavaPlugin implements Listener
             {
                 drop(p);
             }
-            else
+            else if(GravityGunConfig.areEntitiesAllowed() &&
+                    !GravityGunConfig.isBannedEntity(event.getRightClicked().getType()))
             {
                 pickupEntity(p, event.getRightClicked());
             }
@@ -284,12 +293,25 @@ public class GravityGun extends JavaPlugin implements Listener
                     RayTraceResult ray = raytraceFor(p);
                     if(ray != null)
                     {
-                        if(ray.getHitBlock() != null)
+                        if(ray.getHitBlock() != null && GravityGunConfig.areBlocksAllowed())
                         {
+                            Block block = ray.getHitBlock();
+                            if(block.getState() instanceof TileState && !GravityGunConfig.areTilesAllowed())
+                            {
+                                return;
+                            }
+                            if(GravityGunConfig.isBannedBlock(block.getType()))
+                            {
+                                return;
+                            }
                             pickupBlock(p, ray.getHitBlock());
                         }
-                        else if(ray.getHitEntity() != null)
+                        else if(ray.getHitEntity() != null && GravityGunConfig.areEntitiesAllowed())
                         {
+                            if(GravityGunConfig.isBannedEntity(ray.getHitEntity().getType()))
+                            {
+                                return;
+                            }
                             pickupEntity(p, ray.getHitEntity());
                         }
                     }
@@ -300,11 +322,15 @@ public class GravityGun extends JavaPlugin implements Listener
                 // Left click - repel
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
-                    Entity newEntity = drop(p);
-                    newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(2.0)));
-                    GravityGunConfig.playRepelSound(p.getLocation());
+                    if(GravityGunConfig.isHeldRepelAllowed())
+                    {
+                        Entity newEntity = drop(p);
+                        newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(
+                                GravityGunConfig.getHeldRepelPower())));
+                        GravityGunConfig.playRepelSound(p.getLocation());
+                    }
                 }
-                else
+                else if(GravityGunConfig.isAreaRepelAllowed())
                 {
                     List<Entity> nearby = p.getNearbyEntities(5, 5, 5);
                     if(nearby.size() > 0)
@@ -312,7 +338,8 @@ public class GravityGun extends JavaPlugin implements Listener
                         for(Entity e : nearby)
                         {
                             Vector between = e.getLocation().toVector().subtract(p.getLocation().toVector());
-                            e.setVelocity(e.getVelocity().add(between.normalize().multiply(7.5 / (between.length() + 1))));
+                            e.setVelocity(e.getVelocity().add(between.normalize().multiply(
+                                    GravityGunConfig.getAreaRepelPower() / (between.length() + 1))));
                         }
                         GravityGunConfig.playRepelSound(p.getLocation());
                     }
