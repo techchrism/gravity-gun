@@ -18,7 +18,15 @@ public class ParticleUtils
         return spawnFrom;
     }
     
-    public static void displayCurve(Location from, Location to, Location center)
+    public static Color fadeBetween(Color first, Color second, double progress)
+    {
+        return Color.fromRGB(
+                (int) (first.getRed() + ((first.getRed() - second.getRed()) * progress)),
+                (int) (first.getGreen() + ((first.getGreen() - second.getGreen()) * progress)),
+                (int) (first.getBlue() + ((first.getBlue() - second.getBlue()) * progress)));
+    }
+    
+    public static void displayCurve(Location from, Location to, Location center, Color color)
     {
         int points = 30;
         for(int i = 0; i < points; i++)
@@ -30,7 +38,7 @@ public class ParticleUtils
                     (Math.pow(1 - t, 2) * from.getY()) + (2 * (1 - t) * t * center.getY()) + (Math.pow(t, 2) * to.getY()),
                     (Math.pow(1 - t, 2) * from.getZ()) + (2 * (1 - t) * t * center.getZ()) + (Math.pow(t, 2) * to.getZ()));
             
-            l.getWorld().spawnParticle(Particle.REDSTONE, l, 1, new Particle.DustOptions(Color.GRAY, 0.3f));
+            l.getWorld().spawnParticle(Particle.REDSTONE, l, 1, new Particle.DustOptions(color, 0.3f));
         }
     }
 }

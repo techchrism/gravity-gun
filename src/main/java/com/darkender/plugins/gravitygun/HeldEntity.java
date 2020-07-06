@@ -1,8 +1,10 @@
 package com.darkender.plugins.gravitygun;
 
+import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
@@ -54,10 +56,11 @@ public class HeldEntity
         {
             teleportSpot = holder.getEyeLocation().add(holder.getEyeLocation().getDirection().multiply(5.0));
         }
-    
+        
         ParticleUtils.displayCurve(ParticleUtils.getHandScreenLocation(holder.getEyeLocation(), false),
                 teleportSpot,
-                holder.getEyeLocation().add(velocity));
+                holder.getEyeLocation().add(velocity),
+                Color.GRAY);
         if(teleportSpot.getWorld().equals(from.getWorld()))
         {
             velocity = teleportSpot.toVector().subtract(from.toVector());
@@ -73,7 +76,14 @@ public class HeldEntity
             held.setFallDistance(0.0F);
         }
         
-        held.teleport(teleportSpot);
+        if(held.getType() == EntityType.PLAYER)
+        {
+            TeleportUtils.teleport((Player) held, teleportSpot);
+        }
+        else
+        {
+            held.teleport(teleportSpot);
+        }
         return true;
     }
     
