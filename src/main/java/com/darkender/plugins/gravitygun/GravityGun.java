@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -204,6 +205,15 @@ public class GravityGun extends JavaPlugin implements Listener
                     }
                 }
             }
+        }
+    }
+    
+    @EventHandler
+    private void onPlayerQuit(PlayerQuitEvent event)
+    {
+        if(heldEntities.containsKey(event.getPlayer().getUniqueId()))
+        {
+            drop(event.getPlayer());
         }
     }
 }
