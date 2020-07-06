@@ -2,10 +2,7 @@ package com.darkender.plugins.gravitygun;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.FallingBlock;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -75,7 +72,7 @@ public class GravityGun extends JavaPlugin implements Listener
     {
         Location rayStart = player.getEyeLocation();
         RayTraceResult rayTraceResult = rayStart.getWorld().rayTrace(rayStart, player.getEyeLocation().getDirection(),
-                100.0, FluidCollisionMode.NEVER, true, 0.0, entity ->
+                20.0, FluidCollisionMode.NEVER, true, 0.0, entity ->
                 {
                     // Ensure the raytrace doesn't collide with the player
                     if(entity instanceof Player)
@@ -102,31 +99,46 @@ public class GravityGun extends JavaPlugin implements Listener
                     armorStand.setInvulnerable(true);
                     armorStand.setSilent(true);
                 });
-        heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand));
+        heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand, true));
         block.setType(Material.AIR);
         player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
     }
     
-    private void dropBlock(Player player)
+    private void pickupEntity(Player player, Entity entity)
+    {
+        heldEntities.put(player.getUniqueId(), new HeldEntity(player, entity, false));
+        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+    }
+
+    private void drop(Player player)
     {
         HeldEntity heldEntity = heldEntities.get(player.getUniqueId());
-        ArmorStand stand = (ArmorStand) heldEntity.getHeld();
-        FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
-                stand.getHelmet().getType().createBlockData());
-        fallingBlock.setVelocity(heldEntity.getVelocity());
-        stand.remove();
+        if(heldEntity.isBlockEntity())
+        {
+            ArmorStand stand = (ArmorStand) heldEntity.getHeld();
+            FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
+                    stand.getHelmet().getType().createBlockData());
+            fallingBlock.setVelocity(heldEntity.getVelocity());
+            stand.remove();
+        }
+        else
+        {
+            Entity held = heldEntity.getHeld();
+            held.setVelocity(heldEntity.getVelocity());
+            held.setFallDistance(0.0F);
+        }
+    
         heldEntities.remove(player.getUniqueId());
         player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
     }
     
     @EventHandler
-    public void onPlayerInteractArEntity(PlayerInteractAtEntityEvent event)
+    private void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event)
     {
         PlayerInventory i = event.getPlayer().getInventory();
         if(isGravityGun(event.getHand() == EquipmentSlot.HAND ? i.getItemInMainHand() : i.getItemInOffHand()))
         {
             event.setCancelled(true);
-    
             Player p = event.getPlayer();
     
             // Keep from accidentally clicking more than once per second
@@ -138,7 +150,11 @@ public class GravityGun extends JavaPlugin implements Listener
     
             if(heldEntities.containsKey(p.getUniqueId()))
             {
-                dropBlock(p);
+                drop(p);
+            }
+            else
+            {
+                pickupEntity(p, event.getRightClicked());
             }
         }
     }
@@ -164,7 +180,7 @@ public class GravityGun extends JavaPlugin implements Listener
                 
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
-                    dropBlock(p);
+                    drop(p);
                 }
                 else
                 {
@@ -174,6 +190,10 @@ public class GravityGun extends JavaPlugin implements Listener
                         if(ray.getHitBlock() != null)
                         {
                             pickupBlock(p, ray.getHitBlock());
+                        }
+                        else if(ray.getHitEntity() != null)
+                        {
+                            pickupEntity(p, ray.getHitEntity());
                         }
                     }
                 }
