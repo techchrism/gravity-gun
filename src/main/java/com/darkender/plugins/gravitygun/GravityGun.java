@@ -18,9 +18,11 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 public class GravityGun extends JavaPlugin implements Listener
@@ -52,7 +54,7 @@ public class GravityGun extends JavaPlugin implements Listener
                     if(!(heldEntityEntry.getValue().tick()))
                     {
                         Player p = heldEntityEntry.getValue().getHolder();
-                        p.playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+                        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
                         return true;
                     }
                     return false;
@@ -115,18 +117,19 @@ public class GravityGun extends JavaPlugin implements Listener
                 });
         heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand, true));
         block.setType(Material.AIR);
-        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
     }
     
     private void pickupEntity(Player player, Entity entity)
     {
         heldEntities.put(player.getUniqueId(), new HeldEntity(player, entity, false));
-        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
     }
 
-    private void drop(Player player)
+    private Entity drop(Player player)
     {
         HeldEntity heldEntity = heldEntities.get(player.getUniqueId());
+        Entity newEntity;
         if(heldEntity.isBlockEntity())
         {
             ArmorStand stand = (ArmorStand) heldEntity.getHeld();
@@ -134,16 +137,19 @@ public class GravityGun extends JavaPlugin implements Listener
                     stand.getHelmet().getType().createBlockData());
             fallingBlock.setVelocity(heldEntity.getVelocity());
             stand.remove();
+            newEntity = fallingBlock;
         }
         else
         {
             Entity held = heldEntity.getHeld();
             held.setVelocity(heldEntity.getVelocity());
             held.setFallDistance(0.0F);
+            newEntity = held;
         }
     
         heldEntities.remove(player.getUniqueId());
-        player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+        return newEntity;
     }
     
     @EventHandler
@@ -189,19 +195,18 @@ public class GravityGun extends JavaPlugin implements Listener
         if(isGravityGun(event.getItem()))
         {
             event.setCancelled(true);
+    
+            Player p = event.getPlayer();
+            // Keep from accidentally clicking more than once per second
+            if(p.hasMetadata("last-used") && p.getMetadata("last-used").get(0).asLong() > (System.nanoTime() - (1000 * 1000000)))
+            {
+                return;
+            }
+            p.setMetadata("last-used", new FixedMetadataValue(this, System.nanoTime()));
             
             // Right click - pick up or drop
             if(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)
             {
-                Player p = event.getPlayer();
-                
-                // Keep from accidentally clicking more than once per second
-                if(p.hasMetadata("last-used") && p.getMetadata("last-used").get(0).asLong() > (System.nanoTime() - (1000 * 1000000)))
-                {
-                    return;
-                }
-                p.setMetadata("last-used", new FixedMetadataValue(this, System.nanoTime()));
-                
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
                     drop(p);
@@ -219,6 +224,29 @@ public class GravityGun extends JavaPlugin implements Listener
                         {
                             pickupEntity(p, ray.getHitEntity());
                         }
+                    }
+                }
+            }
+            else
+            {
+                // Left click - repel
+                if(heldEntities.containsKey(p.getUniqueId()))
+                {
+                    Entity newEntity = drop(p);
+                    newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(2.0)));
+                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.0F, 1.2F);
+                }
+                else
+                {
+                    List<Entity> nearby = p.getNearbyEntities(5, 5, 5);
+                    if(nearby.size() > 0)
+                    {
+                        for(Entity e : nearby)
+                        {
+                            Vector between = e.getLocation().toVector().subtract(p.getLocation().toVector());
+                            e.setVelocity(e.getVelocity().add(between.normalize().multiply(7.5 / (between.length() + 1))));
+                        }
+                        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.0F, 1.2F);
                     }
                 }
             }
