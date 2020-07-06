@@ -41,10 +41,16 @@ public class GravityGun extends JavaPlugin implements Listener
             @Override
             public void run()
             {
-                for(HeldEntity heldEntity : heldEntities.values())
+                heldEntities.entrySet().removeIf(heldEntityEntry ->
                 {
-                    heldEntity.tick();
-                }
+                    if(!(heldEntityEntry.getValue().tick()))
+                    {
+                        Player p = heldEntityEntry.getValue().getHolder();
+                        p.playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+                        return true;
+                    }
+                    return false;
+                });
             }
         }, 1L, 1L);
     }

@@ -24,8 +24,12 @@ public class HeldEntity
         this.velocity = new Vector(0, 0, 0);
     }
     
-    public void tick()
+    public boolean tick()
     {
+        if(!this.held.isValid() || this.held.isDead())
+        {
+            return false;
+        }
         Location rayStart = holder.getEyeLocation();
         RayTraceResult rayTraceResult = rayStart.getWorld().rayTraceBlocks(rayStart, holder.getEyeLocation().getDirection(),
                 5.0, FluidCollisionMode.NEVER, true);
@@ -57,6 +61,7 @@ public class HeldEntity
         from = teleportSpot;
         
         held.teleport(teleportSpot);
+        return true;
     }
     
     public Player getHolder()
