@@ -15,6 +15,12 @@ public class HeldEntity
     private Location from;
     private Vector velocity;
     
+    /**
+     * Constructs a HeldEntity object
+     * @param holder the player holding the entity
+     * @param held the entity being held
+     * @param blockEntity true if the held entity is an armor stand with a block on its head
+     */
     public HeldEntity(Player holder, Entity held, boolean blockEntity)
     {
         this.holder = holder;
@@ -24,6 +30,10 @@ public class HeldEntity
         this.velocity = new Vector(0, 0, 0);
     }
     
+    /**
+     * Called every tick - does teleportation and velocity checks
+     * @return true if the entity is valid, false if the held entity is no longer valid
+     */
     public boolean tick()
     {
         if(!this.held.isValid() || this.held.isDead())

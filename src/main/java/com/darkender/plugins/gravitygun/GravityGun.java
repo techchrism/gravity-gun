@@ -54,6 +54,8 @@ public class GravityGun extends JavaPlugin implements Listener
             public void run()
             {
                 justClicked.clear();
+                
+                // Tick all held entities and drop them if they're invalid
                 heldEntities.entrySet().removeIf(heldEntityEntry ->
                 {
                     if(!(heldEntityEntry.getValue().tick()))
@@ -67,6 +69,7 @@ public class GravityGun extends JavaPlugin implements Listener
             }
         }, 1L, 1L);
         
+        // Check for old held blocks when loaded
         for(World world : getServer().getWorlds())
         {
             for(Chunk chunk : world.getLoadedChunks())
@@ -128,6 +131,10 @@ public class GravityGun extends JavaPlugin implements Listener
     
     private void pickupBlock(Player player, Block block)
     {
+        // Create an armor stand with a block on its head
+        // Other possible solutions include falling sand and actually placing the block in the world
+        // Falling sand has an update interval of 20 ticks instead of every tick - https://hub.spigotmc.org/jira/browse/SPIGOT-2749
+        // Placing a block in the world can have unintended consequences
         ArmorStand stand = player.getWorld().spawn(block.getLocation().add(0.5, 0, 0.5),
                 ArmorStand.class, armorStand ->
                 {
@@ -155,6 +162,7 @@ public class GravityGun extends JavaPlugin implements Listener
         Entity newEntity;
         if(heldEntity.isBlockEntity())
         {
+            // Spawns in falling sand for the picked up block
             ArmorStand stand = (ArmorStand) heldEntity.getHeld();
             FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
                     stand.getHelmet().getType().createBlockData());
@@ -175,6 +183,10 @@ public class GravityGun extends JavaPlugin implements Listener
         return newEntity;
     }
     
+    /**
+     * Checks the chunk for any armor stands used to hold blocks and removes them
+     * @param chunk the chunk to check
+     */
     private void cleanChunk(Chunk chunk)
     {
         for(Entity e : chunk.getEntities())
@@ -210,6 +222,7 @@ public class GravityGun extends JavaPlugin implements Listener
             {
                 pickupEntity(p, event.getRightClicked());
             }
+            // Ensure the player doesn't open any entity inventories
             justClicked.add(p.getUniqueId());
         }
     }
@@ -226,6 +239,7 @@ public class GravityGun extends JavaPlugin implements Listener
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event)
     {
+        // Prevent the player from damaging entities with the gravity gun
         if(event.getDamager().getType() == EntityType.PLAYER)
         {
             Player damager = (Player) event.getDamager();
@@ -312,6 +326,7 @@ public class GravityGun extends JavaPlugin implements Listener
     @EventHandler(ignoreCancelled = true)
     private void onInventoryClick(InventoryClickEvent event)
     {
+        // Prevent the player from using the gun as horse armor
         if(event.getInventory() instanceof HorseInventory && isGravityGun(event.getCurrentItem()))
         {
             event.setCancelled(true);
