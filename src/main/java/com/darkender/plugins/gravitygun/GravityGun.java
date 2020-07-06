@@ -39,6 +39,8 @@ public class GravityGun extends JavaPlugin implements Listener
         heldBlockKey = new NamespacedKey(this, "held-block");
         heldEntities = new HashMap<>();
         justClicked = new HashSet<>();
+        GravityGunConfig.init(this);
+        GravityGunConfig.reload();
         
         GravityGunCommand gravityGunCommand = new GravityGunCommand();
         getCommand("gravitygun").setExecutor(gravityGunCommand);
@@ -58,7 +60,7 @@ public class GravityGun extends JavaPlugin implements Listener
                     if(!(heldEntityEntry.getValue().tick()))
                     {
                         Player p = heldEntityEntry.getValue().getHolder();
-                        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+                        GravityGunConfig.playDropSound(p.getLocation());
                         return true;
                     }
                     return false;
@@ -152,13 +154,13 @@ public class GravityGun extends JavaPlugin implements Listener
                 });
         heldEntities.put(player.getUniqueId(), new HeldEntity(player, stand, true));
         block.setType(Material.AIR);
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+        GravityGunConfig.playPickupSound(player.getLocation());
     }
     
     private void pickupEntity(Player player, Entity entity)
     {
         heldEntities.put(player.getUniqueId(), new HeldEntity(player, entity, false));
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1.0f, 1.5f);
+        GravityGunConfig.playPickupSound(player.getLocation());
     }
 
     private Entity drop(Player player)
@@ -184,7 +186,7 @@ public class GravityGun extends JavaPlugin implements Listener
         }
     
         heldEntities.remove(player.getUniqueId());
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
+        GravityGunConfig.playDropSound(player.getLocation());
         return newEntity;
     }
     
@@ -300,7 +302,7 @@ public class GravityGun extends JavaPlugin implements Listener
                 {
                     Entity newEntity = drop(p);
                     newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(2.0)));
-                    p.getWorld().playSound(p.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.0F, 1.2F);
+                    GravityGunConfig.playRepelSound(p.getLocation());
                 }
                 else
                 {
@@ -312,7 +314,7 @@ public class GravityGun extends JavaPlugin implements Listener
                             Vector between = e.getLocation().toVector().subtract(p.getLocation().toVector());
                             e.setVelocity(e.getVelocity().add(between.normalize().multiply(7.5 / (between.length() + 1))));
                         }
-                        p.getWorld().playSound(p.getLocation(), Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1.0F, 1.2F);
+                        GravityGunConfig.playRepelSound(p.getLocation());
                     }
                 }
             }
