@@ -27,6 +27,9 @@ held-repel-power: 2.0
 # The range to look for blocks / entities to pick up
 pickup-range: 20
 
+# "true" if held entities shouldn't suffocate in blocks
+prevent-suffocation-damage: true
+
 pickup-sound:
   name: ENTITY_ILLUSIONER_PREPARE_BLINDNESS
   pitch: 1.5

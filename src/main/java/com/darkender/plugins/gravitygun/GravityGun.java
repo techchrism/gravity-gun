@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
@@ -364,6 +365,22 @@ public class GravityGun extends JavaPlugin implements Listener
         if(event.getInventory() instanceof HorseInventory && isGravityGun(event.getCurrentItem()))
         {
             event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(ignoreCancelled = true)
+    private void onEntityDamage(EntityDamageEvent event)
+    {
+        if(event.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION && GravityGunConfig.shouldPreventSuffocationDamage())
+        {
+            for(HeldEntity heldEntity : heldEntities.values())
+            {
+                if(heldEntity.getHeld().equals(event.getEntity()))
+                {
+                    event.setCancelled(true);
+                    break;
+                }
+            }
         }
     }
     

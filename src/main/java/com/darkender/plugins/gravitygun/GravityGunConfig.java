@@ -110,6 +110,11 @@ public class GravityGunConfig
         return base.getConfig().getDouble("pickup-range");
     }
     
+    public static boolean shouldPreventSuffocationDamage()
+    {
+        return base.getConfig().getBoolean("prevent-suffocation-damage");
+    }
+    
     public static void playPickupSound(Location location)
     {
         pickupSound.play(location);
