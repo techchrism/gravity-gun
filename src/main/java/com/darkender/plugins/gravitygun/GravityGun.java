@@ -2,16 +2,16 @@ package com.darkender.plugins.gravitygun;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
@@ -61,6 +61,8 @@ public class GravityGun extends JavaPlugin implements Listener
         ItemStack gravityGun = new ItemStack(Material.GOLDEN_HORSE_ARMOR, 1);
         ItemMeta meta = gravityGun.getItemMeta();
         meta.setDisplayName(ChatColor.GOLD + "Gravity Gun");
+        meta.addEnchant(Enchantment.DURABILITY, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.getPersistentDataContainer().set(gravityGunKey, PersistentDataType.BYTE, (byte) 1);
         gravityGun.setItemMeta(meta);
         return gravityGun;
@@ -214,6 +216,15 @@ public class GravityGun extends JavaPlugin implements Listener
         if(heldEntities.containsKey(event.getPlayer().getUniqueId()))
         {
             drop(event.getPlayer());
+        }
+    }
+    
+    @EventHandler
+    private void onInventoryClick(InventoryClickEvent event)
+    {
+        if(event.getInventory() instanceof HorseInventory && isGravityGun(event.getCurrentItem()))
+        {
+            event.setCancelled(true);
         }
     }
 }
