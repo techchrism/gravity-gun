@@ -242,6 +242,13 @@ public class GravityGun extends JavaPlugin implements Listener
             // Ensure the player doesn't open any entity inventories
             justClicked.add(p.getUniqueId());
         }
+        
+        // Prevent interactions with held block armor stands
+        if(event.getRightClicked().getType() == EntityType.ARMOR_STAND &&
+                event.getRightClicked().getPersistentDataContainer().has(heldBlockKey, PersistentDataType.BYTE))
+        {
+            event.setCancelled(true);
+        }
     }
     
     @EventHandler(ignoreCancelled = true)
@@ -264,6 +271,13 @@ public class GravityGun extends JavaPlugin implements Listener
             {
                 event.setCancelled(true);
             }
+        }
+    
+        // Prevent held block armor stands from being damaged
+        if(event.getEntityType() == EntityType.ARMOR_STAND &&
+                event.getEntity().getPersistentDataContainer().has(heldBlockKey, PersistentDataType.BYTE))
+        {
+            event.setCancelled(true);
         }
     }
     
