@@ -109,10 +109,11 @@ public class GravityGun extends JavaPlugin implements Listener
     
     private void dropBlock(Player player)
     {
-        ArmorStand stand = (ArmorStand) heldEntities.get(player.getUniqueId()).getHeld();
+        HeldEntity heldEntity = heldEntities.get(player.getUniqueId());
+        ArmorStand stand = (ArmorStand) heldEntity.getHeld();
         FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
                 stand.getHelmet().getType().createBlockData());
-        fallingBlock.setVelocity(player.getVelocity());
+        fallingBlock.setVelocity(heldEntity.getVelocity());
         stand.remove();
         heldEntities.remove(player.getUniqueId());
         player.playSound(player.getLocation(), Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1.0f, 0.6f);
