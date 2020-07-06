@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -19,18 +20,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.RayTraceResult;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.UUID;
 
 public class GravityGun extends JavaPlugin implements Listener
 {
     public static NamespacedKey gravityGunKey;
     private HashMap<UUID, HeldEntity> heldEntities;
+    private HashSet<UUID> justClicked;
     
     @Override
     public void onEnable()
     {
         gravityGunKey = new NamespacedKey(this, "gravity-gun");
         heldEntities = new HashMap<>();
+        justClicked = new HashSet<>();
         
         GravityGunCommand gravityGunCommand = new GravityGunCommand();
         getCommand("gravitygun").setExecutor(gravityGunCommand);
@@ -42,6 +46,7 @@ public class GravityGun extends JavaPlugin implements Listener
             @Override
             public void run()
             {
+                justClicked.clear();
                 heldEntities.entrySet().removeIf(heldEntityEntry ->
                 {
                     if(!(heldEntityEntry.getValue().tick()))
@@ -165,6 +170,16 @@ public class GravityGun extends JavaPlugin implements Listener
             {
                 pickupEntity(p, event.getRightClicked());
             }
+            justClicked.add(p.getUniqueId());
+        }
+    }
+    
+    @EventHandler(ignoreCancelled = true)
+    private void onInventoryOpen(InventoryOpenEvent event)
+    {
+        if(justClicked.contains(event.getPlayer().getUniqueId()))
+        {
+            event.setCancelled(true);
         }
     }
     
@@ -219,7 +234,7 @@ public class GravityGun extends JavaPlugin implements Listener
         }
     }
     
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     private void onInventoryClick(InventoryClickEvent event)
     {
         if(event.getInventory() instanceof HorseInventory && isGravityGun(event.getCurrentItem()))
