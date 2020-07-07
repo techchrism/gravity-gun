@@ -214,6 +214,27 @@ public class GravityGun extends JavaPlugin implements Listener
         }
     }
     
+    private boolean passesTimeout(Player player)
+    {
+        // Used to keep from accidentally clicking more than once per second
+        if(player.hasMetadata("last-used") &&
+                player.getMetadata("last-used").get(0).asLong() > (System.nanoTime() - (1000 * 1000000)))
+        {
+            return false;
+        }
+        player.setMetadata("last-used", new FixedMetadataValue(this, System.nanoTime()));
+        return true;
+    }
+    
+    private boolean isPlayerHoldingAPlayer(Entity entity)
+    {
+        if(entity == null || entity.getType() != EntityType.PLAYER || !heldEntities.containsKey(entity.getUniqueId()))
+        {
+            return false;
+        }
+        return heldEntities.get(entity.getUniqueId()).getHeld().getType() == EntityType.PLAYER;
+    }
+    
     @EventHandler
     private void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event)
     {
@@ -223,19 +244,13 @@ public class GravityGun extends JavaPlugin implements Listener
             event.setCancelled(true);
             Player p = event.getPlayer();
     
-            // Keep from accidentally clicking more than once per second
-            if(p.hasMetadata("last-used") && p.getMetadata("last-used").get(0).asLong() > (System.nanoTime() - (1000 * 1000000)))
-            {
-                return;
-            }
-            p.setMetadata("last-used", new FixedMetadataValue(this, System.nanoTime()));
-    
-            if(heldEntities.containsKey(p.getUniqueId()))
+            if(heldEntities.containsKey(p.getUniqueId()) && passesTimeout(p))
             {
                 drop(p);
             }
             else if(GravityGunConfig.areEntitiesAllowed() &&
-                    !GravityGunConfig.isBannedEntity(event.getRightClicked().getType()))
+                    !GravityGunConfig.isBannedEntity(event.getRightClicked().getType()) &&
+                    passesTimeout(p))
             {
                 pickupEntity(p, event.getRightClicked());
             }
@@ -287,19 +302,12 @@ public class GravityGun extends JavaPlugin implements Listener
         if(isGravityGun(event.getItem()))
         {
             event.setCancelled(true);
-    
             Player p = event.getPlayer();
-            // Keep from accidentally clicking more than once per second
-            if(p.hasMetadata("last-used") && p.getMetadata("last-used").get(0).asLong() > (System.nanoTime() - (1000 * 1000000)))
-            {
-                return;
-            }
-            p.setMetadata("last-used", new FixedMetadataValue(this, System.nanoTime()));
             
             // Right click - pick up or drop
             if(event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)
             {
-                if(heldEntities.containsKey(p.getUniqueId()))
+                if(heldEntities.containsKey(p.getUniqueId()) && passesTimeout(p))
                 {
                     drop(p);
                 }
@@ -311,11 +319,9 @@ public class GravityGun extends JavaPlugin implements Listener
                         if(ray.getHitBlock() != null && GravityGunConfig.areBlocksAllowed())
                         {
                             Block block = ray.getHitBlock();
-                            if(block.getState() instanceof TileState && !GravityGunConfig.areTilesAllowed())
-                            {
-                                return;
-                            }
-                            if(GravityGunConfig.isBannedBlock(block.getType()))
+                            if((block.getState() instanceof TileState && !GravityGunConfig.areTilesAllowed()) ||
+                                    GravityGunConfig.isBannedBlock(block.getType()) ||
+                                    !passesTimeout(p))
                             {
                                 return;
                             }
@@ -323,7 +329,11 @@ public class GravityGun extends JavaPlugin implements Listener
                         }
                         else if(ray.getHitEntity() != null && GravityGunConfig.areEntitiesAllowed())
                         {
-                            if(GravityGunConfig.isBannedEntity(ray.getHitEntity().getType()))
+                            // Ensure it's not a banned entity type
+                            // Ensure
+                            if(GravityGunConfig.isBannedEntity(ray.getHitEntity().getType()) ||
+                                    isPlayerHoldingAPlayer(ray.getHitEntity()) ||
+                                    !passesTimeout(p))
                             {
                                 return;
                             }
@@ -337,7 +347,7 @@ public class GravityGun extends JavaPlugin implements Listener
                 // Left click - repel
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
-                    if(GravityGunConfig.isHeldRepelAllowed())
+                    if(GravityGunConfig.isHeldRepelAllowed() && passesTimeout(p))
                     {
                         Entity newEntity = drop(p);
                         newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(
@@ -348,7 +358,7 @@ public class GravityGun extends JavaPlugin implements Listener
                 else if(GravityGunConfig.isAreaRepelAllowed())
                 {
                     List<Entity> nearby = p.getNearbyEntities(5, 5, 5);
-                    if(nearby.size() > 0)
+                    if(nearby.size() > 0 && passesTimeout(p))
                     {
                         for(Entity e : nearby)
                         {
