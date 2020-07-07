@@ -226,13 +226,28 @@ public class GravityGun extends JavaPlugin implements Listener
         return true;
     }
     
-    private boolean isPlayerHoldingAPlayer(Entity entity)
+    private boolean isInHoldingChain(Player base, Player check)
     {
-        if(entity == null || entity.getType() != EntityType.PLAYER || !heldEntities.containsKey(entity.getUniqueId()))
+        if(!heldEntities.containsKey(check.getUniqueId()))
         {
             return false;
         }
-        return heldEntities.get(entity.getUniqueId()).getHeld().getType() == EntityType.PLAYER;
+        Entity held = heldEntities.get(check.getUniqueId()).getHeld();
+        if(held.getType() == EntityType.PLAYER)
+        {
+             if(held.getUniqueId().equals(base.getUniqueId()))
+             {
+                 return true;
+             }
+             else
+             {
+                 return isInHoldingChain(base, (Player) held);
+             }
+        }
+        else
+        {
+            return false;
+        }
     }
     
     @EventHandler
@@ -329,10 +344,11 @@ public class GravityGun extends JavaPlugin implements Listener
                         }
                         else if(ray.getHitEntity() != null && GravityGunConfig.areEntitiesAllowed())
                         {
-                            // Ensure it's not a banned entity type
-                            // Ensure
+                            // Ensure it's not a banned entity type or in a holding chain
+                            // A "holding chain" is when two or more players are holding each other with the gravity gun
                             if(GravityGunConfig.isBannedEntity(ray.getHitEntity().getType()) ||
-                                    isPlayerHoldingAPlayer(ray.getHitEntity()) ||
+                                    (ray.getHitEntity().getType() == EntityType.PLAYER &&
+                                            isInHoldingChain(p, (Player) ray.getHitEntity())) ||
                                     !passesTimeout(p))
                             {
                                 return;
