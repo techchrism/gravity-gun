@@ -96,14 +96,33 @@ public class GravityGun extends JavaPlugin implements Listener
         meta.setDisplayName(ChatColor.GOLD + "Gravity Gun");
         meta.addEnchant(Enchantment.DURABILITY, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        meta.setLore(Arrays.asList(
+        String blockOrMob = "";
+        if(GravityGunConfig.areBlocksAllowed())
+        {
+            blockOrMob += "block";
+        }
+        if(GravityGunConfig.areEntitiesAllowed())
+        {
+            if(GravityGunConfig.areBlocksAllowed())
+            {
+                blockOrMob += " or ";
+            }
+            blockOrMob += "mob";
+        }
+        List<String> lore = new ArrayList<>(Arrays.asList(
                 ChatColor.DARK_AQUA + "Right Click",
-                ChatColor.BLUE + " \u2022 Pick up / drop block or mob",
+                ChatColor.BLUE + " \u2022 Pick up / drop " + blockOrMob,
                 "",
-                ChatColor.DARK_AQUA + "Left Click",
-                ChatColor.BLUE + " \u2022 Repel surrounding mobs",
-                ChatColor.BLUE + " \u2022 Repel held block or mob"));
-        
+                ChatColor.DARK_AQUA + "Left Click"));
+        if(GravityGunConfig.isAreaRepelAllowed())
+        {
+            lore.add(ChatColor.BLUE + " \u2022 Repel surrounding mobs");
+        }
+        if(GravityGunConfig.isHeldRepelAllowed())
+        {
+            lore.add(ChatColor.BLUE + " \u2022 Repel held " + blockOrMob);
+        }
+        meta.setLore(lore);
         meta.getPersistentDataContainer().set(gravityGunKey, PersistentDataType.BYTE, (byte) 1);
         gravityGun.setItemMeta(meta);
         return gravityGun;
@@ -130,7 +149,7 @@ public class GravityGun extends JavaPlugin implements Listener
                     if(entity instanceof Player)
                     {
                         Player p = (Player) entity;
-                        return (p.getEntityId() != player.getEntityId() && p.getGameMode() != GameMode.SPECTATOR && p.getGameMode() != GameMode.CREATIVE);
+                        return (p.getEntityId() != player.getEntityId() && p.getGameMode() != GameMode.SPECTATOR);
                     }
                     else
                     {
