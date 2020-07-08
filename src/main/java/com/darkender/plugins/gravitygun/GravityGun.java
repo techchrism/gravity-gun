@@ -59,10 +59,10 @@ public class GravityGun extends JavaPlugin implements Listener
                 // Tick all held entities and drop them if they're invalid
                 heldEntities.entrySet().removeIf(heldEntityEntry ->
                 {
-                    if(!(heldEntityEntry.getValue().tick()))
+                    Player p = heldEntityEntry.getValue().getHolder();
+                    if(!(heldEntityEntry.getValue().tick()) || !isGravityGun(p.getInventory().getItemInMainHand()))
                     {
-                        Player p = heldEntityEntry.getValue().getHolder();
-                        GravityGunConfig.playDropSound(p.getLocation());
+                        dropEntityLogic(p);
                         return true;
                     }
                     return false;
@@ -191,30 +191,38 @@ public class GravityGun extends JavaPlugin implements Listener
         GravityGunConfig.playPickupSound(player.getLocation());
     }
 
-    private Entity drop(Player player)
+    private Entity dropEntityLogic(Player player)
     {
         HeldEntity heldEntity = heldEntities.get(player.getUniqueId());
-        Entity newEntity;
-        if(heldEntity.isBlockEntity())
+        Entity newEntity = null;
+        if(heldEntity.isValid())
         {
-            // Spawns in falling sand for the picked up block
-            ArmorStand stand = (ArmorStand) heldEntity.getHeld();
-            FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
-                    stand.getHelmet().getType().createBlockData());
-            fallingBlock.setVelocity(heldEntity.getVelocity());
-            stand.remove();
-            newEntity = fallingBlock;
+            if(heldEntity.isBlockEntity())
+            {
+                // Spawns in falling sand for the picked up block
+                ArmorStand stand = (ArmorStand) heldEntity.getHeld();
+                FallingBlock fallingBlock = stand.getWorld().spawnFallingBlock(stand.getLocation().add(0, 1.7, 0),
+                        stand.getHelmet().getType().createBlockData());
+                fallingBlock.setVelocity(heldEntity.getVelocity());
+                stand.remove();
+                newEntity = fallingBlock;
+            }
+            else
+            {
+                Entity held = heldEntity.getHeld();
+                held.setVelocity(heldEntity.getVelocity());
+                held.setFallDistance(0.0F);
+                newEntity = held;
+            }
         }
-        else
-        {
-            Entity held = heldEntity.getHeld();
-            held.setVelocity(heldEntity.getVelocity());
-            held.setFallDistance(0.0F);
-            newEntity = held;
-        }
-    
-        heldEntities.remove(player.getUniqueId());
         GravityGunConfig.playDropSound(player.getLocation());
+        return newEntity;
+    }
+    
+    private Entity drop(Player player)
+    {
+        Entity newEntity = dropEntityLogic(player);
+        heldEntities.remove(player.getUniqueId());
         return newEntity;
     }
     

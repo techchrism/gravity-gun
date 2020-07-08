@@ -32,13 +32,18 @@ public class HeldEntity
         this.velocity = new Vector(0, 0, 0);
     }
     
+    public boolean isValid()
+    {
+        return this.held.isValid() && !this.held.isDead();
+    }
+    
     /**
      * Called every tick - does teleportation and velocity checks
      * @return true if the entity is valid, false if the held entity is no longer valid
      */
     public boolean tick()
     {
-        if(!this.held.isValid() || this.held.isDead())
+        if(!isValid())
         {
             return false;
         }
