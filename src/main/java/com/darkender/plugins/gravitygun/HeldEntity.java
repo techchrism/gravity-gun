@@ -79,6 +79,7 @@ public class HeldEntity
         else
         {
             held.setFallDistance(0.0F);
+            held.setVelocity(new Vector(0, 0 ,0));
         }
         
         if(held.getType() == EntityType.PLAYER)
