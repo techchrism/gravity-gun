@@ -375,6 +375,7 @@ public class GravityGun extends JavaPlugin implements Listener
                             Block block = ray.getHitBlock();
                             if((block.getState() instanceof TileState && !GravityGunConfig.areTilesAllowed()) ||
                                     GravityGunConfig.isBannedBlock(block.getType()) ||
+                                    !p.hasPermission("gravitygun.pickup.block") ||
                                     !passesTimeout(p))
                             {
                                 return;
@@ -389,6 +390,7 @@ public class GravityGun extends JavaPlugin implements Listener
                                     (ray.getHitEntity().getType() == EntityType.PLAYER &&
                                             isInHoldingChain(p, (Player) ray.getHitEntity())) ||
                                     isBeingHeld(ray.getHitEntity()) ||
+                                    !p.hasPermission("gravitygun.pickup.entity") ||
                                     !passesTimeout(p))
                             {
                                 return;
@@ -403,7 +405,8 @@ public class GravityGun extends JavaPlugin implements Listener
                 // Left click - repel
                 if(heldEntities.containsKey(p.getUniqueId()))
                 {
-                    if(GravityGunConfig.isHeldRepelAllowed() && passesTimeout(p))
+                    if(GravityGunConfig.isHeldRepelAllowed() &&
+                            p.hasPermission("gravitygun.repelheld") && passesTimeout(p))
                     {
                         Entity newEntity = drop(p);
                         newEntity.setVelocity(newEntity.getVelocity().add(p.getEyeLocation().getDirection().multiply(
@@ -411,7 +414,7 @@ public class GravityGun extends JavaPlugin implements Listener
                         GravityGunConfig.playRepelSound(p.getLocation());
                     }
                 }
-                else if(GravityGunConfig.isAreaRepelAllowed())
+                else if(GravityGunConfig.isAreaRepelAllowed() && p.hasPermission("gravitygun.repelarea"))
                 {
                     List<Entity> nearby = p.getNearbyEntities(5, 5, 5);
                     if(nearby.size() > 0 && passesTimeout(p))

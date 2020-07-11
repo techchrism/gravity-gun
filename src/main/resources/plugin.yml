@@ -8,3 +8,18 @@ commands:
     aliases:
       - gg
     permission: gravitygun.cmd
+permissions:
+  gravitygun.pickup.block:
+    default: true
+  gravitygun.pickup.entity:
+    default: true
+  gravitygun.repelheld:
+    default: true
+  gravitygun.repelarea:
+    default: true
+  gravitygun.cmd:
+    default: op
+  gravitygun.get:
+    default: op
+  gravitygun.reload:
+    default: op
