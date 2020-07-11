@@ -277,6 +277,18 @@ public class GravityGun extends JavaPlugin implements Listener
         }
     }
     
+    private boolean isBeingHeld(Entity check)
+    {
+        for(HeldEntity heldEntity : heldEntities.values())
+        {
+            if(heldEntity.getHeld().equals(check))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     @EventHandler
     private void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event)
     {
@@ -376,6 +388,7 @@ public class GravityGun extends JavaPlugin implements Listener
                             if(GravityGunConfig.isBannedEntity(ray.getHitEntity().getType()) ||
                                     (ray.getHitEntity().getType() == EntityType.PLAYER &&
                                             isInHoldingChain(p, (Player) ray.getHitEntity())) ||
+                                    isBeingHeld(ray.getHitEntity()) ||
                                     !passesTimeout(p))
                             {
                                 return;
