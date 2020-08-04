@@ -17,9 +17,7 @@ permissions:
     default: true
   gravitygun.repelarea:
     default: true
-  gravitygun.cmd:
+  gravitygun.cmd.get:
     default: op
-  gravitygun.get:
-    default: op
-  gravitygun.reload:
+  gravitygun.cmd.reload:
     default: op
