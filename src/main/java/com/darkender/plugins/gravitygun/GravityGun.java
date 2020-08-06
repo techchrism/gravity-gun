@@ -78,6 +78,24 @@ public class GravityGun extends JavaPlugin implements Listener
                 cleanChunk(chunk);
             }
         }
+        
+        // Add the recipe
+        Material outsideMaterial;
+        try
+        {
+            outsideMaterial = Material.valueOf("NETHERITE_INGOT");
+        }
+        catch(Exception e)
+        {
+            outsideMaterial = Material.IRON_BLOCK;
+        }
+        ShapedRecipe gravitygunRecipe = new ShapedRecipe(gravityGunKey, getGravityGun());
+        gravitygunRecipe.shape("OOR", " SG", "OOR");
+        gravitygunRecipe.setIngredient('G', Material.GOLD_INGOT);
+        gravitygunRecipe.setIngredient('R', Material.REDSTONE);
+        gravitygunRecipe.setIngredient('S', Material.NETHER_STAR);
+        gravitygunRecipe.setIngredient('O', outsideMaterial);
+        Bukkit.addRecipe(gravitygunRecipe);
     }
     
     @Override
@@ -87,11 +105,23 @@ public class GravityGun extends JavaPlugin implements Listener
         {
             drop(Bukkit.getPlayer(key));
         }
+    
+        // Remove added recipes on plugin disable
+        Iterator<Recipe> iter = getServer().recipeIterator();
+        while(iter.hasNext())
+        {
+            Recipe check = iter.next();
+            if(check instanceof ShapedRecipe && ((ShapedRecipe) check).getKey().equals(gravityGunKey))
+            {
+                getLogger().info("Removed recipe");
+                iter.remove();
+            }
+        }
     }
     
     public static ItemStack getGravityGun()
     {
-        ItemStack gravityGun = new ItemStack(Material.GOLDEN_HORSE_ARMOR, 1);
+        ItemStack gravityGun = new ItemStack(Material.IRON_HORSE_ARMOR, 1);
         ItemMeta meta = gravityGun.getItemMeta();
         meta.setDisplayName(ChatColor.GOLD + "Gravity Gun");
         meta.addEnchant(Enchantment.DURABILITY, 1, true);
